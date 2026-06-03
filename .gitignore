@@ -225,3 +225,5 @@ node_modules/
 nodebb
 src/passport-fusionauth-oidc.js
 /src/passport-fusionauth-oidc.js.map
+node_modules/
+package-lock.json
