@@ -30,6 +30,17 @@
 		}, false, false),
 	};
 
+	// Derive a NodeBB-valid username from OIDC claims. Keycloak's preferred_username
+	// is often the user's email, but NodeBB rejects '@' (and other characters) in
+	// usernames. Take the local-part and strip anything NodeBB disallows; NodeBB
+	// de-duplicates collisions itself (User.uniqueUsername), and accounts are linked
+	// on the immutable `sub`, so the username is only a display handle.
+	const toValidUsername = (preferred, email) => {
+		const raw = String(preferred || email || '').split('@')[0];
+		const cleaned = raw.replace(/[^\w.+ -]/g, '').trim();
+		return cleaned || 'user';
+	};
+
 	const Oidc = {};
 
 	/**
@@ -89,7 +100,7 @@
 				const isAdmin = settings.rolesClaim ? (profile[settings.rolesClaim] === 'admin' || (profile[settings.rolesClaim] && profile[settings.rolesClaim].some && profile[settings.rolesClaim].some((value) => value === 'admin'))) : false;
 				Oidc.login({
 					oAuthid: profile.sub,
-					username: profile.preferred_username || email.split('@')[0],
+					username: toValidUsername(profile.preferred_username, email),
 					email: email,
 					rolesEnabled: settings.rolesClaim && settings.rolesClaim.length !== 0,
 					isAdmin: isAdmin,
